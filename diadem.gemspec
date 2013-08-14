@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Diadem::VERSION
   spec.authors       = ["John Prince"]
   spec.email         = ["jtprince@gmail.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
+  spec.description   = %q{Dynamic isotope analysis for mass spectrometry isotope experiments.  Calculates and visualizes varying isotope ratios and allows the user fine control over incorporation rates.}
+  spec.summary       = %q{Dynamic isotope analysis for mass spectrometry isotope experiments}
   spec.homepage      = ""
   spec.license       = "MIT"
 

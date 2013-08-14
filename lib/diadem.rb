@@ -1,5 +1,8 @@
 require "diadem/version"
 
 module Diadem
-  # Your code goes here...
+  # single method rough draft of the process
+  def 
+  end
+    
 end
