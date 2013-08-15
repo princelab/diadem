@@ -18,6 +18,20 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "bundler", "~> 1.3"
-  spec.add_development_dependency "rake"
+  [
+    ["mspire", "~> 0.9.0"],
+  ].each do |args|
+    spec.add_dependency(*args)
+  end
+
+  [
+    ["bundler", "~> 1.3"],
+    ["rake"],
+    ["rspec", "~> 2.13.0"], 
+    ["rdoc", "~> 3.12"], 
+    ["simplecov"],
+  ].each do |args|
+    spec.add_development_dependency(*args)
+  end
+
 end
