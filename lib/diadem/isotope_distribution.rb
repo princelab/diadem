@@ -1,7 +1,12 @@
+require 'mspire/molecular_formula'
+require 'mspire/isotope'
+require 'fftw3'
 
 module Diadem
 
   class IsotopeDistribution
+    DEFAULT_ISOTOPE_TABLE = Mspire::Isotope::BY_ELEMENT
+
     # should always add up to 1
     attr_accessor :intensities
     # should be inclusive of last value
@@ -15,17 +20,16 @@ module Diadem
     end
 
     class << self
+
+      def from_formula(formula)
+        Mspire::MolecularFormula[formula].isotope_distribution
+      end
+
       # returns a new distribution, uses equal weights if none given
       def average(distributions, weights=nil)
         weights ||= Array.new(distributions.size, 1)
         min_nucleon_num = distributions.map(&:nucleon_start).min
         max_nucleon_num = distributions.map(&:nucleon_end).max
-        #puts "NUCLEON NUMS:"
-        #p min_nucleon_num
-        #p max_nucleon_num
-
-        #puts "BEFORE:"
-        #p distributions.map(&:intensities)
 
         new_intensity_arrays = distributions.zip(weights).map do |dist, weight|
           new_pcts = dist.intensities.dup
@@ -34,15 +38,10 @@ module Diadem
           [[right_pad, new_pcts.size], [left_pad, 0]].each do |pad, loc|
             new_pcts[loc,0] = Array.new(pad, 0.0)
           end
-          #puts "DURING:"
-          #p new_pcts
           new_pcts.map! {|v| v * weight }
           new_pcts
         end
 
-        #puts "AFTER:"
-        #p new_intensity_arrays
-        #abort 'hererere'
         summed_intensities = new_intensity_arrays.transpose.map do |col|
           col.reduce(:+)
         end

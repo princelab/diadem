@@ -22,6 +22,15 @@ describe Diadem::IsotopeDistribution do
     output.nucleon_end.should == 6
   end
 
+  specify 'average with unequal weights' do
+    output = Diadem::IsotopeDistribution.average(@dists, [1,1,10])
+    [0.021, 0.083, 0.042, 0.021, 0.0, 0.833].zip(output.intensities) do |act, exp|
+      act.should be_within(0.002).of(exp)
+    end
+    output.nucleon_start.should == 1
+    output.nucleon_end.should == 6
+  end
+
   specify 'normalize!' do
     output = Diadem::IsotopeDistribution.new([2,2,2,2], 3).normalize!
     output.nucleon_start.should == 3
