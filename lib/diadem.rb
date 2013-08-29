@@ -57,6 +57,9 @@ module Diadem
       penetration = aaseq.each_char.inject(0.0) do |sum, aa|
         sum + ( @penetration_table[aa] || 0.0 )
       end
+      puts "#{@element}: #{formula[@element]}"
+      puts "penetration: #{penetration}"
+      puts "fraction_penetration: #{penetration.to_f / formula[@element]}"
       penetration.to_f / formula[@element]
     end
     

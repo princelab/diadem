@@ -7,7 +7,8 @@ describe 'calculating enrichement' do
   it 'makes spectra' do
     element = :H
     mass_number = 2
-    aaseq = 'AAI'
+    aaseq = 'TANLGAGAAQPLR'
+    #aaseq = 'AAI'
     #aaseq = 'ELENLAAMDLELQK'
     calc = Diadem::Calculator.new(element, mass_number)
     enrichments = (0..1).step(0.1).map {|v| v.round(1) }
