@@ -2,32 +2,21 @@ require 'spec_helper'
 require 'csv'
 
 require 'diadem/calculator'
-require 'gnuplot'
 
 Isotope = Struct.new(:element, :mass_number)
 Peptide = Struct.new(:aaseq, :isotope, :enrichments)
-Enrichment = Struct.new(:fraction, :intensities)
-
-class Array
-  def resize(num)
-    newar = self.dup
-    to_pad = num - size
-    unless to_pad <= 0
-      to_pad.times { newar << 0.0 }
-    end
-    newar[0,num]
-  end
-end
+Enrichment = Struct.new(:fraction, :distribution)
 
 # returns [fractions, [array_of_intensity1s, array_of_intensity2s ...]
 def transpose_enrichments(peptide)
   fractions = peptide.enrichments.map(&:fraction)
-  [fractions, peptide.enrichments.map(&:intensities).transpose]
+  [fractions, peptide.enrichments.map(&:distribution).transpose]
 end
 
 
 describe 'calculating enrichments' do
-  it 'makes spectra' do
+
+  it 'makes distributions' do
 
     rows = CSV.read("gold_standards/output_tabular.csv")
     mida_peptides = []
@@ -55,60 +44,51 @@ describe 'calculating enrichments' do
 
         calc = Diadem::Calculator.new(element, mass_number, Diadem::Enrichment::AA_TABLE, Mspire::Isotope::BY_ELEMENT, round)
         fractions = mida_peptide.enrichments.map(&:fraction)
-        spectra = calc.calculate_isotope_distribution_spectrum(mida_peptide.aaseq, fractions)
+        (distributions, info) = calc.calculate_isotope_distributions(mida_peptide.aaseq, fractions)
 
         my_peptide = Peptide.new( mida_peptide.aaseq, mida_peptide.isotope )
-
-        my_peptide.enrichments = spectra.zip(fractions).map do |spectra, fractions|
-          Enrichment.new( fractions, spectra.intensities.resize(7) )
+        my_peptide.enrichments = distributions.zip(fractions).map do |distribution, fractions|
+          Enrichment.new( fractions, distribution.resize!(7) )
         end
         my_peptide
       end
 
-     # puts "MIDA:"
-      #mida_peptides.each do |mpep|
-        #mpep.enrichments.each do |enr|
-          #puts [enr.fraction, enr.intensities.reduce(:+)].join("\t")
-        #end
-      #end
+      $PLOT = false
+      if $PLOT
+        require 'gnuplot'
+        mida_peptides.zip(my_peptides) do |mida, mine|
+          plottype = 'png'
+          base = mida.aaseq + "-ROUND:#{round}"
+          plotfile = base + ".#{plottype}"
+          mi = mida.isotope
 
-      #puts "MINE:"
-      #my_peptides.each do |mpep|
-        #mpep.enrichments.each do |enr|
-          #puts [enr.fraction, enr.intensities.reduce(:+)].join("\t")
-        #end
-      #end
+          Gnuplot.open do |gp|
+            Gnuplot::Plot.new(gp) do |plot|
 
-      mida_peptides.zip(my_peptides) do |mida, mine|
-        plottype = 'png'
-        base = mida.aaseq + "-ROUND:#{round}"
-        puts "working on: #{base}"
-        plotfile = base + ".#{plottype}"
-        mi = mida.isotope
+              plot.title [mida.aaseq, "el:#{mi.element}", "massnum:#{mi.mass_number}", "round:#{round}"].join(" ")
+              plot.terminal plottype
+              plot.output plotfile
+              plot.xlabel "label fraction"
+              plot.ylabel "relative intensity"
+              plot.yrange "[0:0.5]"
 
-        Gnuplot.open do |gp|
-          Gnuplot::Plot.new(gp) do |plot|
+              plot.data = []
 
-            plot.title [mida.aaseq, "el:#{mi.element}", "massnum:#{mi.mass_number}", "round:#{round}"].join(" ")
-            plot.terminal plottype
-            plot.output plotfile
-            plot.xlabel "label fraction"
-            plot.ylabel "relative intensity"
-            plot.yrange "[0:0.5]"
+              mida_fracs_and_int_ars = transpose_enrichments(mida)
 
-            plot.data = []
-
-            mida_fracs_and_int_ars = transpose_enrichments(mida)
-
-            byu_fracs_and_ints_ars = transpose_enrichments(mine)
-            [:mida, mida_fracs_and_int_ars, :byu, byu_fracs_and_ints_ars].each_slice(2) do |name, (fracs, int_ars)|
-              int_ars.each_with_index do |ints, mnum|
-                plot.data << Gnuplot::DataSet.new( [fracs, ints] ) {|ds| ds.title = "#{name}-M#{mnum}"; ds.with = "lines" }
+              byu_fracs_and_ints_ars = transpose_enrichments(mine)
+              [:mida, mida_fracs_and_int_ars, :byu, byu_fracs_and_ints_ars].each_slice(2) do |name, (fracs, int_ars)|
+                int_ars.each_with_index do |ints, mnum|
+                  plot.data << Gnuplot::DataSet.new( [fracs, ints] ) {|ds| ds.title = "#{name}-M#{mnum}"; ds.with = "lines" }
+                end
               end
             end
           end
         end
       end
+
     end
   end
 end
+
+

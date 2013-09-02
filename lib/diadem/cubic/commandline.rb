@@ -7,6 +7,7 @@ module Diadem
 
       class << self
         def parse(argv)
+          make_range = ->(start,stop,step) { Range.new(start, stop).step(step) }
 
           start = 0.0
           stop = 0.1
@@ -14,9 +15,12 @@ module Diadem
           opt = OpenStruct.new( {
             carbamidomethylation: true,
             oxidized_methionine: true,
-            element: 'H',
+            element: :H,
             mass_number: 2,
-            range: Range.new(start, stop).step(step),
+            range: make_range[ start, stop, step ],
+            degree: 3,
+            header: true,
+            num_isotopomers: 5,
           } )
                               
           parser = OptionParser.new do |op|
@@ -34,12 +38,14 @@ module Diadem
             op.separator ""
             op.separator "options:"
             op.on("--no-carbamidomethylation", "do not use this mod by default") { opt.carbamidomethylation = false } 
-            op.on("-e", "--element <#{opt.element}>", "element with isotopic label") {|v| opt.element = v }
+            op.on("-e", "--element <#{opt.element}>", "element with isotopic label") {|v| opt.element = v.to_sym }
             op.on("-m", "--mass-number <#{opt.mass_number}>", Integer, "the labeled element mass number") {|v| opt.mass_number = v }
             op.on("--range <start:stop:step>", "the underlying input values (default: #{[start, stop, step].join(':')})") do |v| 
-              (start, stop, step) = v.split(':')
-              opt.range = Range.new(start, stop).step(step)
+              opt.range = make_range[ *v.split(':') ]
             end
+            op.on("--degree <#{opt.degree}>", Integer, "the degree polynomial") {|v| opt.degree = v }
+            op.on("--num-isotopomers <#{opt.num_isotopomers}>", Integer, "the number of isotopomers to calculate") {|v| opt.num_isotopomers = v }
+            op.on("--no-header", "don't print a header line") {|v| opt.header = false }
           end
           parser.parse!(argv)
           [argv, opt]
