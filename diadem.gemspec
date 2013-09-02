@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   [
-    ["mspire", "~> 0.9.1"],
+    ["mspire", "~> 0.10.0"],
     ["fftw3", "~> 0.3"],
     ["gnuplot", "~> 2.6.2"],
   ].each do |args|

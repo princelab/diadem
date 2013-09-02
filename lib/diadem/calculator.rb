@@ -1,4 +1,5 @@
 require "diadem/version"
+require "diadem/enrichment"
 require 'mspire/molecular_formula'
 require 'mspire/isotope/distribution'
 
@@ -12,31 +13,6 @@ module Diadem
     isot_to_enrich = new_isotopes.find {|isot| isot.mass_number == mass_number }
     isot_to_enrich.relative_abundance += fraction
     new_isotopes
-  end
-
-  module Enrichment
-    AA_TABLE = {
-      'A' => 4,
-      'R' => 3.43,
-      'N' => 1.89,
-      'D' => 1.89,
-      'C' => 1.62,
-      'E' => 3.95,
-      'Q' => 3.95,
-      'G' => 2.06,
-      'H' => 2.88,
-      'I' => 1,
-      'L' => 0.6,
-      'K' => 0.54,
-      'M' => 1.12,
-      'F' => 0.32,
-      'P' => 2.59,
-      'S' => 2.61,
-      'T' => 0.2,
-      'Y' => 0.42,
-      'W' => 0.0,
-      'V' => 0.56,
-    }
   end
 
   class Calculator
@@ -62,12 +38,22 @@ module Diadem
       penetration.to_f / formula[@element]
     end
     
+    # interprets lowercase m as singly oxidized methionine
     def calculate_isotope_distribution_spectrum(aaseq, enrichments, normalize_type=:total )
-      pct_cutoff = 0.001
+      pct_cutoff = nil
 
-      formula = Mspire::MolecularFormula.from_aaseq(aaseq)
+      num_oxidized = aaseq.each_char.count('m')
+      aaseq_up = aaseq.upcase
 
-      max_pen_frac = max_penetration_fraction(aaseq, formula)
+      formula = Mspire::MolecularFormula.from_aaseq(aaseq_up)
+      p aaseq
+      puts "BEFORE ox: "
+      p formula
+      formula += Mspire::MolecularFormula.new( { O: num_oxidized } )
+      puts "AFTER ox: "
+      p formula
+
+      max_pen_frac = max_penetration_fraction(aaseq_up, formula)
 
       isotopes = @isotope_table[@element]
 

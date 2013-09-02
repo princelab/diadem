@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'csv'
 
-require 'diadem'
+require 'diadem/calculator'
 require 'gnuplot'
 
 Isotope = Struct.new(:element, :mass_number)
@@ -26,7 +26,7 @@ def transpose_enrichments(peptide)
 end
 
 
-describe 'calculating enrichement' do
+describe 'calculating enrichments' do
   it 'makes spectra' do
 
     rows = CSV.read("gold_standards/output_tabular.csv")
@@ -46,7 +46,7 @@ describe 'calculating enrichement' do
         read_enrichments = true
       end
     end
-    mida_peptides.reject! {|me| me.aaseq.include?('m') }
+    #mida_peptides.reject! {|me| me.aaseq.include?('m') }
 
     [true, false].each do |round|
       my_peptides = mida_peptides.map do |mida_peptide|
