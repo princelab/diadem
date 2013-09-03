@@ -24,6 +24,9 @@ Run diadem-cubic.rb from the commandline with no args to get help:
 
 ## LICENSE
 
+GNU Public License version 3 (see LICENSE.txt).  Please contact the authors for 
+consideration of releasing the software under different terms.
+
 ## Acronym 
 
 Diadem stands for Dynamic Isotope Analysis DEMystified or maybe Dynamic Isotope
