@@ -8,6 +8,35 @@ require 'mspire/isotope/distribution'
 
 module Diadem
   class Calculator
+    # a match (a regex or a String of length 1) that indicates which amino
+    # acid should be modified, diff_formula is an Mspire::MolecularFormula
+    # object, gain  is whether the molecular formula is added or subtracted
+    # (boolean, default true).  static is boolean, default true.  match_block
+    # by default will merely return the thing being matched (which is good
+    # behavior for static mods)
+    Modification = Struct.new(:match, :diff_formula, :gain, :static, :match_block) do
+      def initialize(*args, &_match_block)
+        (_char, _formula, _gain, _static) = args
+        _gain.nil? && ( _gain=true )
+        _static.nil? && ( _static=true )
+        _match_block.nil? && (_match_block=Diadem::Calculator::Modification::STATIC_MATCH_BLOCK)
+        super(_char, _formula, _gain, _static, _match_block)
+      end
+    end
+
+    class Modification
+      VAR_MATCH_BLOCK = lambda(&:upcase)
+      STATIC_MATCH_BLOCK = lambda {|match| match }
+
+      MF = Mspire::MolecularFormula
+      OXIDIZED_METHIONINE = Modification.new('m', MF['O'], &VAR_MATCH_BLOCK)
+      # aka methylcarboxamido
+      CARBAMIDOMETHYL = Modification.new('C', MF['C2H3NO'])
+
+      DEFAULT_STATIC_MODS = [CARBAMIDOMETHYL]
+      DEFAULT_VAR_MODS = [OXIDIZED_METHIONINE]
+    end
+
 
     Info = Struct.new(:aaseq, :formula, :penetration, :masses)
 
@@ -64,17 +93,40 @@ module Diadem
       @info.penetration = penetration
       penetration.to_f / formula[@element]
     end
+
+    # returns [formula_adjusted_for_mods, aaseq_with_no_mods]
+    def calculate_formula(aaseq_with_mods, mods)
+      mods.group_by(&:char).each do |modchar, mod|
+        aaseq_with_mods.each_char do |char|
+          if char == modchar
+          end
+        end
+      end
+
+
+      Mspire::MolecularFormula.from_aaseq(aaseq)
+    end
     
     # Returns [distributions, info].  Interprets lowercase m as singly oxidized methionine.
-    def calculate_isotope_distributions(aaseq, enrichments, normalize_type=:total, length=5)
+    def calculate_isotope_distributions(aaseq, enrichments, normalize_type: :total, length: 5, mods: [*Diadem::Calculator::Modification::DEFAULT_VAR_MODS])
       @info = OpenStruct.new
       pct_cutoff = nil
 
-      num_oxidized = aaseq.each_char.count('m')
-      aaseq_up = aaseq.upcase
+      mf = Mspire::MolecularFormula
+      aaseq_up = aaseq
+      subtract_formula = mf.new
+      add_formula = mf.new
+      mods.each do |mod|
+        delta_formula = mod.gain ? add_formula : subtract_formula
+        aaseq_up = aaseq_up.gsub(mod.match) do |match|
+          delta_formula.add!(mod.diff_formula)
+          mod.match_block.call(match)
+        end
+      end
 
-      formula = Mspire::MolecularFormula.from_aaseq(aaseq_up)
-      formula += Mspire::MolecularFormula.new( { O: num_oxidized } )
+      formula = mf.from_aaseq(aaseq_up)
+      formula += add_formula
+      formula -= subtract_formula
       @info.formula = formula
 
       max_pen_frac = max_penetration_fraction(aaseq_up, formula)
