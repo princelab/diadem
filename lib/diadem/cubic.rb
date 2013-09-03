@@ -27,7 +27,7 @@ module Diadem
         calc = Diadem::Calculator.new( *opt.isotope.values )
 
         if opt.header
-          cats = %w(sequence formula mass n)
+          cats = %w(sequence mods formula mass n)
           isotopomers = *opt.num_isotopomers.times.map {|n| "M#{n}" }
           cats.push(*isotopomers)
           isotopomers.each do |label|
@@ -41,13 +41,28 @@ module Diadem
         aaseqs.each do |aaseq|
           # we cannot ensure the base 0% has been included in the range, so
           # calculate it separately
-          (dists, info) = calc.calculate_isotope_distributions(aaseq, [0.0])
-          zero_pct_dist = dists.first
+          mods = []
+          if opt.carbamidomethyl
+            mods << Diadem::Calculator::Modification::CARBAMIDOMETHYL
+          end
+          if opt.oxidized_met
+            mods << Diadem::Calculator::Modification::OXIDIZED_METHIONINE
+          end
 
-          (distributions, info) = calc.calculate_isotope_distributions(aaseq, opt.range.dup)
+
+          (distributions, info) = calc.calculate_isotope_distributions(aaseq, opt.range.dup, mods: mods)
           polynomials = Diadem::Calculator.distributions_to_polynomials(opt.range.to_a, distributions, opt.num_isotopomers, opt.degree)
 
-          line = [aaseq, info.formula, info.formula.mass.round(6), info.penetration]
+          zero_pct_dist = 
+            if opt.range.first == 0.0
+              distributions.first
+            else
+              (dists, info) = calc.calculate_isotope_distributions(aaseq, [0.0])
+              zero_pct_dist = dists.first
+            end
+
+          modinfo = info.mods.map {|match, mod| "#{match}:#{mod.sign}#{mod.diff_formula}" }.join(' ')
+          line = [aaseq, modinfo, info.formula, info.formula.mass.round(6), info.penetration]
           line.push *zero_pct_dist.intensities[0,opt.num_isotopomers].map {|v| v.round(6) }
           polynomials.each do |coeffs|
             line.push *coeffs.reverse

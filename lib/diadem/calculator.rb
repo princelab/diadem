@@ -22,6 +22,11 @@ module Diadem
         _match_block.nil? && (_match_block=Diadem::Calculator::Modification::STATIC_MATCH_BLOCK)
         super(_char, _formula, _gain, _static, _match_block)
       end
+
+      # the arithmetic sign as a symbol: :+ or :-
+      def sign
+        gain  ?  :+  :  :-
+      end
     end
 
     class Modification
@@ -35,10 +40,11 @@ module Diadem
 
       DEFAULT_STATIC_MODS = [CARBAMIDOMETHYL]
       DEFAULT_VAR_MODS = [OXIDIZED_METHIONINE]
+      DEFAULT_MODS = DEFAULT_STATIC_MODS + DEFAULT_VAR_MODS
     end
 
 
-    Info = Struct.new(:aaseq, :formula, :penetration, :masses)
+    Info = Struct.new(:orig_aaseq, :clean_aaseq, :formula, :penetration, :masses, :mods)
 
     class Polynomial < Array ; end
 
@@ -108,21 +114,24 @@ module Diadem
     end
     
     # Returns [distributions, info].  Interprets lowercase m as singly oxidized methionine.
-    def calculate_isotope_distributions(aaseq, enrichments, normalize_type: :total, length: 5, mods: [*Diadem::Calculator::Modification::DEFAULT_VAR_MODS])
-      @info = OpenStruct.new
+    def calculate_isotope_distributions(aaseq, enrichments, normalize_type: :total, mods: Diadem::Calculator::Modification::DEFAULT_MODS)
+      @info = Info.new
       pct_cutoff = nil
 
       mf = Mspire::MolecularFormula
       aaseq_up = aaseq
       subtract_formula = mf.new
       add_formula = mf.new
+      matched_mods = []
       mods.each do |mod|
         delta_formula = mod.gain ? add_formula : subtract_formula
         aaseq_up = aaseq_up.gsub(mod.match) do |match|
+          matched_mods << [match, mod]
           delta_formula.add!(mod.diff_formula)
           mod.match_block.call(match)
         end
       end
+      @info.mods = matched_mods
 
       formula = mf.from_aaseq(aaseq_up)
       formula += add_formula
