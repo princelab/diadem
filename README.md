@@ -9,7 +9,9 @@ protein turnover.
 
 ## Examples
 
-Coming.
+Run diadem-cubic.rb from the commandline:
+
+    % diadem-cubic.rb
 
 ## Acronym 
 
