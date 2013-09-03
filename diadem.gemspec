@@ -21,7 +21,6 @@ Gem::Specification.new do |spec|
   [
     ["mspire", "~> 0.10.0"],
     ["fftw3", "~> 0.3"],
-    ["gnuplot", "~> 2.6.2"],
   ].each do |args|
     spec.add_dependency(*args)
   end
@@ -32,6 +31,7 @@ Gem::Specification.new do |spec|
     ["rspec", "~> 2.13.0"], 
     ["rdoc", "~> 3.12"], 
     ["simplecov"],
+    ["gnuplot", "~> 2.6.2"],
   ].each do |args|
     spec.add_development_dependency(*args)
   end
