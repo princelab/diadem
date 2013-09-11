@@ -6,6 +6,8 @@ involving protein turnover.
 
 ## Installation
 
+NOTE: requires ruby >= 2.0
+
 Until the Mercury7 algorithm is implemented you will need the fftw3 gem
 installed.  It depends on the fftw3 library.  On Ubuntu/Debian, it's as easy
 as this:
