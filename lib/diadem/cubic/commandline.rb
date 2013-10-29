@@ -15,6 +15,7 @@ module Diadem
           opt = OpenStruct.new( {
             carbamidomethyl: true,
             oxidized_met: true,
+            pyroglutamate_from_glutamine: true,
             element: :H,
             mass_number: 2,
             range: make_range[ start, stop, step ],
@@ -27,7 +28,8 @@ module Diadem
             prog = File.basename($0)
             op.banner =  "usage: #{prog} <AASEQ> ..." 
             op.separator "   or: #{prog} <aaseqs>.csv" 
-            op.separator "       <aaseqs>.csv is a single column of AA sequences (no header)"
+            op.separator "       <aaseqs>.csv is a single column of AA sequences"
+            op.separator "        (csv file should have no header; blank lines will be ignored)"
             op.separator ""
             op.separator "output: tab delimited to stdout if AASEQ"
             op.separator "        <aaseqs>#{Diadem::Cubic::FILE_EXT} if csv input"

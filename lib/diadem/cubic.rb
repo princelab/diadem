@@ -38,6 +38,8 @@ module Diadem
           out.puts cats.join(opt.delim)
         end
 
+        aaseqs.compact!  # ignore blank lines
+
         aaseqs.each do |aaseq|
           # we cannot ensure the base 0% has been included in the range, so
           # calculate it separately
@@ -48,7 +50,9 @@ module Diadem
           if opt.oxidized_met
             mods << Diadem::Calculator::Modification::OXIDIZED_METHIONINE
           end
-
+          if opt.pyroglutamate_from_glutamine
+            mods << Diadem::Calculator::Modification::PYROGLUTAMATE_Q
+          end
 
           (distributions, info) = calc.calculate_isotope_distributions(aaseq, opt.range.dup, mods: mods)
           polynomials = Diadem::Calculator.distributions_to_polynomials(opt.range.to_a, distributions, opt.num_isotopomers, opt.degree)

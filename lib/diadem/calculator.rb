@@ -34,12 +34,13 @@ module Diadem
       STATIC_MATCH_BLOCK = lambda {|match| match }
 
       MF = Mspire::MolecularFormula
-      OXIDIZED_METHIONINE = Modification.new('m', MF['O'], &VAR_MATCH_BLOCK)
+      OXIDIZED_METHIONINE = Modification.new('m', MF['O'], true, false, &VAR_MATCH_BLOCK)
+      PYROGLUTAMATE_Q = Modification.new('q', MF['NH3'], false, false, &VAR_MATCH_BLOCK)
       # aka methylcarboxamido
       CARBAMIDOMETHYL = Modification.new('C', MF['C2H3NO'])
 
       DEFAULT_STATIC_MODS = [CARBAMIDOMETHYL]
-      DEFAULT_VAR_MODS = [OXIDIZED_METHIONINE]
+      DEFAULT_VAR_MODS = [OXIDIZED_METHIONINE, PYROGLUTAMATE_Q]
       DEFAULT_MODS = DEFAULT_STATIC_MODS + DEFAULT_VAR_MODS
     end
 
