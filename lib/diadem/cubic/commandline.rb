@@ -22,6 +22,8 @@ module Diadem
             degree: 3,
             header: true,
             num_isotopomers: 5,
+            zero: false,
+            remove_duplicates: true,
           } )
                               
           parser = OptionParser.new do |op|
@@ -37,11 +39,13 @@ module Diadem
             op.separator "options:"
             op.on("-e", "--element <#{opt.element}>", "element with isotopic label") {|v| opt.element = v.to_sym }
             op.on("-m", "--mass-number <#{opt.mass_number}>", Integer, "the labeled element mass number") {|v| opt.mass_number = v }
-            op.on("--no-carbamidomethyl", "do not use this mod by default") { opt.carbamidomethyl = false }
+            op.on("--[no-]carbamidomethyl", "default: carbamidomethyl = true") {|v| opt.carbamidomethyl = v }
             op.on("--range <start:stop:step>", "the underlying input values (#{[start, stop, step].join(':')})") {|v| opt.range = make_range[ *v.split(':') ] }
             op.on("--degree <#{opt.degree}>", Integer, "the degree polynomial") {|v| opt.degree = v }
             op.on("--num-isotopomers <#{opt.num_isotopomers}>", Integer, "the number of isotopomers to calculate") {|v| opt.num_isotopomers = v }
-            op.on("--no-header", "don't print a header line") {|v| opt.header = false }
+            op.on("--[no-]header", "print header line, default: true") {|v| opt.header = v }
+            op.on("--return-zero-coeff", "return the 0th polyfit coefficient") {|v| opt.return_zero_coeff = v }
+            op.on("--[no-]remove-duplicates", "disregard duplicate peptide entries, default: true") {|v| opt.remove_duplicates = v }
           end
           parser.parse!(argv)
           if argv.size == 0

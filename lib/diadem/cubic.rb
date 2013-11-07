@@ -31,7 +31,8 @@ module Diadem
           isotopomers = *opt.num_isotopomers.times.map {|n| "M#{n}" }
           cats.push(*isotopomers)
           isotopomers.each do |label|
-            (opt.degree).downto(0) do |coeff|
+            lowest_coeff = opt.return_zero_coeff ? 0 : 1
+            (opt.degree).downto(lowest_coeff) do |coeff|
               cats << [label, "coeff", coeff].join("_")
             end
           end
@@ -39,6 +40,7 @@ module Diadem
         end
 
         aaseqs.compact!  # ignore blank lines
+        aaseqs.uniq! if opt.remove_duplicates
 
         aaseqs.each do |aaseq|
           # we cannot ensure the base 0% has been included in the range, so
@@ -69,7 +71,9 @@ module Diadem
           line = [aaseq, modinfo, info.formula, info.formula.mass.round(6), info.penetration]
           line.push *zero_pct_dist.intensities[0,opt.num_isotopomers].map {|v| v.round(6) }
           polynomials.each do |coeffs|
-            line.push *coeffs.reverse
+            rev_coeffs = coeffs.reverse
+            rev_coeffs.pop unless opt.return_zero_coeff
+            line.push *rev_coeffs
           end
           out.puts line.join(opt.delim)
         end
