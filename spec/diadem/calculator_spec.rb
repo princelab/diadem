@@ -18,7 +18,7 @@ describe 'calculating enrichments' do
 
   it 'makes distributions' do
 
-    rows = CSV.read("gold_standards/output_tabular.csv")
+    rows = CSV.read(TESTFILES + "/old_output_format/output_tabular.csv")
     mida_peptides = []
     read_enrichments = false
     rows.each_with_index do |row,i|
