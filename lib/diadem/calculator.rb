@@ -115,9 +115,10 @@ module Diadem
     end
     
     # Returns [distributions, info].  Interprets lowercase m as singly oxidized methionine.
+    # Right now, uses first 4 peaks if peptide mass is < 2400 and 5 peaks of >
+    # 2400 [this needs to be parameterized]
     def calculate_isotope_distributions(aaseq, enrichments, normalize_type: :total, mods: Diadem::Calculator::Modification::DEFAULT_MODS)
       @info = Info.new
-      pct_cutoff = nil
 
       mf = Mspire::MolecularFormula
       aaseq_up = aaseq
@@ -139,6 +140,8 @@ module Diadem
       formula -= subtract_formula
       @info.formula = formula
 
+      num_peaks_to_keep = ( formula.mass < 2400 ? 4 : 5 )
+
       max_pen_frac = max_penetration_fraction(aaseq_up, formula)
 
       orig_isotopes = @isotope_table[@element]
@@ -146,7 +149,7 @@ module Diadem
       distributions = enrichments.map do |enrich_frac|
         effective_fraction = max_pen_frac * enrich_frac
         @isotope_table[@element] = Diadem::Calculator.enrich_isotope(orig_isotopes, @mass_number, effective_fraction)
-        spectrum = formula.isotope_distribution_spectrum(normalize_type, pct_cutoff, @isotope_table)
+        spectrum = formula.isotope_distribution_spectrum(normalize: normalize_type, peak_cutoff: num_peaks_to_keep, isotope_table: @isotope_table)
         @isotope_table[@element] = orig_isotopes
         @info.masses = spectrum.mzs unless @info.masses
         Diadem::Distribution.new( spectrum.intensities )
