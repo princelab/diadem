@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   [
-    ["mspire", "~> 0.10.0"],
+    ["mspire", "~> 0.10.3"],
     ["fftw3", "~> 0.3"],
   ].each do |args|
     spec.add_dependency(*args)
