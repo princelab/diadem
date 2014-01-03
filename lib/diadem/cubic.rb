@@ -8,6 +8,11 @@ module Diadem
     Isotope = Struct.new(:element, :mass_number)
     Peptide = Struct.new(:aaseq, :isotope, :enrichments)
     Enrichment = Struct.new(:fraction, :distribution)
+
+    MW_TO_NUM_ISOTOPES = {
+      (0.0...2400.0) => 4,
+      (2400.0..Float::INFINITY) => 5,
+    }
   
     FILE_EXT = '.cubic.csv'
     class << self
@@ -26,9 +31,11 @@ module Diadem
           end
         calc = Diadem::Calculator.new( *opt.isotope.values )
 
+        num_isotopomers = opt.mw_to_num_isotopes.values.max
+
         if opt.header
           cats = %w(sequence mods formula mass n)
-          isotopomers = *opt.num_isotopomers.times.map {|n| "M#{n}" }
+          isotopomers = *num_isotopomers.times.map {|n| "M#{n}" }
           cats.push(*isotopomers)
           isotopomers.each do |label|
             lowest_coeff = opt.return_zero_coeff ? 0 : 1
@@ -56,8 +63,8 @@ module Diadem
             mods << Diadem::Calculator::Modification::PYROGLUTAMATE_Q
           end
 
-          (distributions, info) = calc.calculate_isotope_distributions(aaseq, opt.range.dup, mods: mods)
-          polynomials = Diadem::Calculator.distributions_to_polynomials(opt.range.to_a, distributions, opt.num_isotopomers, opt.degree)
+          (distributions, info) = calc.calculate_isotope_distributions(aaseq, opt.range.dup, mods: mods, mw_to_num_isotopes: opt.mw_to_num_isotopes)
+          polynomials = Diadem::Calculator.distributions_to_polynomials(opt.range.to_a, distributions, info.num_isotopes_used, opt.degree)
 
           zero_pct_dist = 
             if opt.range.first == 0.0
@@ -69,7 +76,8 @@ module Diadem
 
           modinfo = info.mods.map {|match, mod| "#{match}:#{mod.sign}#{mod.diff_formula}" }.join(' ')
           line = [aaseq, modinfo, info.formula, info.formula.mass.round(6), info.penetration]
-          line.push *zero_pct_dist.intensities[0,opt.num_isotopomers].map {|v| v.round(6) }
+          line.push *zero_pct_dist.intensities[0,info.num_isotopes_used].map {|v| v.round(6) }
+          (num_isotopomers - info.num_isotopes_used).times { line.push(nil) }
           polynomials.each do |coeffs|
             rev_coeffs = coeffs.reverse
             rev_coeffs.pop unless opt.return_zero_coeff
